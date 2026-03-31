@@ -20,7 +20,7 @@ app = FastAPI()
 model = joblib.load("driver_behavior_model_without_speed.pkl")
 
 # ---------------- DATABASE ----------------
-DATABASE_URL = os.getenv("postgresql://trip_details_user:IUHbaRAjgGEON0mgdfjiWDRjbYfxBktj@dpg-d75st094tr6s73ce0hd0-a/trip_details")
+DATABASE_URL = "postgresql://trip_details_user:IUHbaRAjgGEON0mgdfjiWDRjbYfxBktj@dpg-d75st094tr6s73ce0hd0-a/trip_details"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
