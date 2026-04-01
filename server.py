@@ -70,8 +70,8 @@ https://maps.google.com/?q={lat},{lon}
 """)
 
         msg['Subject'] = "Rash Driving Alert"
-        msg['From'] = "priyadarshan2310618@ssn.edu.in"
-        msg['To'] = "nishanth2310212@ssn.edu.in"
+        msg['From'] = EMAIL_USER
+        msg['To'] = TO_EMAIL
 
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         server.login(EMAIL_USER, EMAIL_PASS)
