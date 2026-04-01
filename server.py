@@ -13,13 +13,6 @@ from sqlalchemy import create_engine, Column, Integer, Float, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# 🔥 EMAIL
-import smtplib
-from email.mime.text import MIMEText
-
-# 🔥 TIMEZONE
-from datetime import datetime
-import pytz
 
 app = FastAPI()
 
@@ -27,7 +20,7 @@ app = FastAPI()
 model = joblib.load("driver_behavior_model_without_speed.pkl")
 
 # ---------------- DATABASE ----------------
-DATABASE_URL = "postgresql+psycopg2://trip_details_user:IUHbaRAjgGEON0mgdfjiWDRjbYfxBktj@dpg-d75st094tr6s73ce0hd0-a.singapore-postgres.render.com:5432/trip_details"
+DATABASE_URL = "postgresql://trip_details_user:IUHbaRAjgGEON0mgdfjiWDRjbYfxBktj@dpg-d75st094tr6s73ce0hd0-a/trip_details"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
@@ -44,45 +37,6 @@ class Trip(Base):
 
 
 Base.metadata.create_all(bind=engine)
-
-# ---------------- EMAIL CONFIG ----------------
-EMAIL_USER = "priyadarshan2310618@ssn.edu.in"
-EMAIL_PASS = "jujalcqwrkpvztsg"
-TO_EMAIL = "priyadarshan2310618@ssn.edu.in"
-
-last_email_time = 0  # prevent spam
-
-
-def send_alert(prediction, lat, lon):
-    global last_email_time
-
-    if time.time() - last_email_time < 30:
-        return
-
-    try:
-        msg = MIMEText(f"""
-ALERT 🚨
-
-Driver behavior detected: {prediction}
-
-Location:
-https://maps.google.com/?q={lat},{lon}
-""")
-
-        msg['Subject'] = "Rash Driving Alert"
-        msg['From'] = EMAIL_USER
-        msg['To'] = TO_EMAIL
-
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(EMAIL_USER, EMAIL_PASS)
-        server.send_message(msg)
-        server.quit()
-
-        print("EMAIL SENT")
-        last_email_time = time.time()
-
-    except Exception as e:
-        print("EMAIL ERROR:", e)
 
 
 # ---------------- INPUT ----------------
@@ -103,6 +57,7 @@ last_location = None
 last_received_time = None
 
 INACTIVITY_TIMEOUT = 10
+
 
 # ---------------- LIVE DATA ----------------
 latest_data = {
@@ -133,11 +88,9 @@ def predict(data: SensorData):
     ax, ay, az = data.ax, data.ay, data.az
     speed, lat, lon = data.speed, data.lat, data.lon
 
-    # 🔥 IST TIME
-    ist = pytz.timezone('Asia/Kolkata')
-    current_time_str = datetime.now(ist).strftime("%H:%M:%S")
-
+    current_time_str = time.strftime("%H:%M:%S")
     current_timestamp = time.time()
+
     current_location = (lat, lon)
 
     # 🚀 START TRIP
@@ -163,10 +116,6 @@ def predict(data: SensorData):
     X = np.array([[ax, ay, az, acc_mag]])
     prediction = model.predict(X)[0]
 
-    # 🔥 EMAIL ALERT
-    if prediction in ["HARSH_ACCELERATION", "HARSH_BRAKING"]:
-        send_alert(prediction, lat, lon)
-
     # ⏱ UPDATE TIME
     last_received_time = current_timestamp
 
@@ -191,26 +140,26 @@ def predict(data: SensorData):
 
 
 # ---------------- AUTO STOP ----------------
+print("THREAD RUNNING")
 def monitor_inactivity():
     global trip_active, last_received_time, total_distance, start_time
 
     print("THREAD STARTED")
 
-    ist = pytz.timezone('Asia/Kolkata')
-
     while True:
         if trip_active and last_received_time is not None:
 
             time_diff = time.time() - last_received_time
+            print("TIME DIFF:", time_diff)
 
             if time_diff > INACTIVITY_TIMEOUT:
 
                 print("Trip Ended")
 
                 db = SessionLocal()
+                end_time = time.strftime("%H:%M:%S")
 
-                end_time = datetime.now(ist).strftime("%H:%M:%S")
-
+                # UPDATE LIVE DATA
                 latest_data["distance"] = total_distance
                 latest_data["trip_end"] = end_time
                 latest_data["trip_active"] = False
@@ -228,6 +177,9 @@ def monitor_inactivity():
                 except Exception as e:
                     print("DB ERROR:", e)
 
+                print("TRIP SAVED:", start_time, end_time, total_distance)
+
+                # RESET
                 trip_active = False
                 total_distance = 0
                 last_received_time = None
@@ -237,6 +189,7 @@ def monitor_inactivity():
 
 @app.on_event("startup")
 def start_background_task():
+    import threading
     threading.Thread(target=monitor_inactivity, daemon=True).start()
 
 
