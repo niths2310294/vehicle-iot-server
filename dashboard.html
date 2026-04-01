@@ -13,8 +13,6 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-
-/* ✅ YOUR ORIGINAL UI — UNCHANGED */
 *{margin:0;padding:0;box-sizing:border-box;}
 
 body{
@@ -79,10 +77,6 @@ padding:18px;
 display:flex;
 align-items:center;
 gap:14px;
-}
-
-.status-icon{
-font-size:22px;
 }
 
 .status-label{
@@ -187,8 +181,8 @@ font-size:12px;
 background:#f0fdf4;
 border-left:3px solid #86efac;
 }
-
 </style>
+
 </head>
 
 <body>
@@ -201,7 +195,6 @@ border-left:3px solid #86efac;
 <div class="main">
 
 <div class="status-card">
-<div class="status-icon">✅</div>
 <div>
 <div class="status-label">Driving Behavior</div>
 <div class="status-value" id="statusValue">Normal</div>
@@ -262,15 +255,12 @@ border-left:3px solid #86efac;
 
 </div>
 
-<!-- 🔥 ONLY THIS SCRIPT IS UPDATED -->
 <script>
 
 var map=L.map('map').setView([13.0827,80.2707],13);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 var marker=L.marker([13.0827,80.2707]).addTo(map);
-
 var path=[];
 var line=L.polyline(path,{color:'#38bdf8'}).addTo(map);
 
@@ -311,41 +301,37 @@ document.getElementById('coordText').textContent=
 data.lat.toFixed(4)+" , "+data.lon.toFixed(4);
 }
 
-// 🔥 EVENT LOG UPDATE
-
+// 🔥 EVENT LOG
 var list = document.getElementById("eventList");
-
-// CLEAR
 list.innerHTML = "";
 
-// TRIP START
 if (data.trip_start) {
     list.innerHTML += `
     <div class="event-item">
         🟢 Trip Started
-        <span class="event-time">${data.trip_start}</span>
+        <span style="float:right">${data.trip_start}</span>
     </div>`;
 }
 
-// TRIP END
 if (data.trip_end) {
     list.innerHTML += `
     <div class="event-item">
         🔴 Trip Ended
-        <span class="event-time">${data.trip_end}</span>
+        <span style="float:right">${data.trip_end}</span>
     </div>`;
 
     list.innerHTML += `
     <div class="event-item">
-        📏 Distance Travelled
-        <span class="event-time">${(data.distance/1000).toFixed(2)} km</span>
+        📏 Distance
+        <span style="float:right">${(data.distance/1000).toFixed(2)} km</span>
     </div>`;
 }
-});
 
+});
 }
 
-setInterval(updateData,var list=document.getElementById("eventList");2000);
+// ✅ FIXED
+setInterval(updateData, 2000);
 updateData();
 
 </script>
